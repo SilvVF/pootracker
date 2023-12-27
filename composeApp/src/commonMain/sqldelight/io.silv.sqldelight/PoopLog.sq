@@ -1,0 +1,17 @@
+import io.silv.models.GeoPoint;
+import kotlinx.datetime.Instant;
+
+CREATE TABLE PoopLog (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    logId TEXT NOT NULL UNIQUE,
+    instant INTEGER AS Instant NOT NULL,
+    location TEXT AS GeoPoint NOT NULL,
+    createdBy TEXT NOT NULL,
+    FOREIGN KEY (createdBy) REFERENCES User(id) ON DELETE CASCADE
+);
+
+insert:
+INSERT OR REPLACE INTO PoopLog VALUES (?, ?, ?, ?, ?);
+
+selectAll:
+SELECT * FROM PoopLog;
