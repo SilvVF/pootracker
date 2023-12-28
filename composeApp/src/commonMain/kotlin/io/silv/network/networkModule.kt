@@ -24,10 +24,10 @@ val networkModule = module {
             supabaseUrl = SUPABASE_URL,
             supabaseKey = SUPABASE_KEY,
         ) {
-            install(Auth)
             install(Postgrest) {
                 serializer = KotlinXSerializer(get())
             }
+
         }
     }
 

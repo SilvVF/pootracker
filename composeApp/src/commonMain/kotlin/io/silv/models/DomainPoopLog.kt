@@ -1,19 +1,30 @@
 package io.silv.models
 
+import io.silv.network.PoopLogDto
 import iosilvsqldelight.PoopLog
 import kotlinx.datetime.Instant
 
 data class DomainPoopLog(
-    val id: Long,
-    val logId: String,
+    val id: String,
     val createdBy: String,
-    val instant: Instant
+    val createdAt: Instant,
+    val location: GeoPoint?,
+    val synced: Boolean,
 ) {
 
-    constructor(poopLog: PoopLog): this(
-        id = poopLog.id,
-        logId = poopLog.logId,
-        createdBy = poopLog.createdBy,
-        instant = poopLog.instant
+    constructor(resource: PoopLog): this(
+        id = resource.id,
+        createdBy = resource.createdBy,
+        createdAt = resource.instant,
+        location = resource.location,
+        synced = false,
+    )
+
+    constructor(dto: PoopLogDto): this(
+        id = dto.id,
+        createdBy = dto.createdBy,
+        createdAt = dto.createdAt,
+        location = if (dto.cordX != null && dto.cordY != null) { GeoPoint(dto.cordX, dto.cordY) } else null,
+        synced = true,
     )
 }

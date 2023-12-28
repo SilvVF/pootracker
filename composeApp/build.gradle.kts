@@ -13,7 +13,7 @@ kotlin {
     androidTarget {
         compilations.all {
             kotlinOptions {
-                jvmTarget = "1.8"
+                jvmTarget = "11"
             }
         }
     }
@@ -35,12 +35,24 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.koin.android)
             implementation(libs.sqldelight.android.driver)
+
+            implementation(libs.koin.androidx.workmanager)
+
+            // Kotlin + coroutines
+            implementation(libs.androidx.work.runtime.ktx)
+            // optional - Multiprocess support
+            implementation(libs.androidx.work.multiprocess)
+
+
         }
         iosMain.dependencies {
             implementation(libs.sqldelight.native.driver)
         }
         commonMain.dependencies {
             implementation(libs.molecule.runtime)
+
+            implementation(libs.multiplatform.settings)
+            implementation(libs.multiplatform.settings.no.arg)
 
             implementation(libs.koin.core)
             implementation(libs.koin.test)
@@ -65,6 +77,8 @@ kotlin {
 
             implementation(project.dependencies.platform("io.github.jan-tennert.supabase:bom:2.0.2"))
             implementation("io.github.jan-tennert.supabase:postgrest-kt")
+            implementation("io.github.jan-tennert.supabase:realtime-kt")
+
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.cio)
         }
@@ -105,11 +119,14 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
     dependencies {
         debugImplementation(libs.compose.ui.tooling)
     }
+}
+dependencies {
+    implementation("androidx.core:core-ktx:+")
 }
 

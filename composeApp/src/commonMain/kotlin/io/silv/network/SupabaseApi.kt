@@ -12,10 +12,19 @@ class SupabaseApi(
 ) {
 
     suspend fun getPoopLogs() = withContext(ioDispatcher) {
-        client.from(POOP_LOG_TABLE).select().decodeList<PoopLogDto>()
+        kotlin.runCatching {
+            client.from(POOP_LOG_TABLE).select().decodeList<PoopLogDto>()
+        }
+            .onFailure {
+                it.printStackTrace()
+            }
+    }
+
+    suspend fun insertPoopLog() = withContext(ioDispatcher) {
+
     }
 
     companion object {
-        const val POOP_LOG_TABLE = "PoopLog"
+        const val POOP_LOG_TABLE = "logs"
     }
 }

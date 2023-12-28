@@ -26,7 +26,7 @@ class PoopLogHandler(
             )
 
             database.poopLogQueries.insert(
-                null ,logId, instant, location, createdBy
+                PoopLog(logId, createdBy, instant, location, false, false)
             )
         }
     }

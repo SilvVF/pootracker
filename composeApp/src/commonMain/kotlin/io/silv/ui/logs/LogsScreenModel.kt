@@ -1,43 +1,50 @@
 package io.silv.ui.logs
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import co.touchlab.kermit.Logger
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.collectAsState
 import io.silv.data.GetPoopLogs
 import io.silv.data.PoopLogHandler
 import io.silv.models.DomainPoopLog
-import io.silv.models.GeoPoint
 import io.silv.network.SupabaseApi
-import io.silv.util.MoleculeScreenModel
-import io.silv.util.uuid
-import iosilvsqldelight.PoopLog
+import io.silv.util.MoleculeEffectScreenModel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.onEach
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 
-sealed interface LogsEvent
-data object Add: LogsEvent
-data class Delete(val id: Long): LogsEvent
-
-data class LogsModel(
-    val logs: List<DomainPoopLog>,
-    val loading: Boolean
+@Stable
+data class LogsAction(
+    val add: () -> Unit
 )
+
+sealed interface LogsEvent {
+    data object ErrorReceivingLogs: LogsEvent
+}
+
+sealed class LogsModel {
+
+    data object Loading: LogsModel()
+
+    data class Success(
+        val logs: List<DomainPoopLog>,
+        val actions: LogsAction
+    ): LogsModel()
+
+    data class Error(
+        val reason: String,
+        val actions: LogsAction
+    ): LogsModel()
+}
 
 class LogsScreenModel(
     private val getPoopLogs: GetPoopLogs,
     private val poopLogHandler: PoopLogHandler,
     private val api: SupabaseApi
-): MoleculeScreenModel<LogsEvent, LogsModel>() {
+): MoleculeEffectScreenModel<LogsEvent, LogsModel>() {
 
     @Composable
-    override fun models(events: Flow<LogsEvent>): LogsModel {
+    override fun models(events: SendChannel<LogsEvent>): LogsModel {
         return LogsPresenter(getPoopLogs, poopLogHandler, api, events)
     }
 }
@@ -47,34 +54,33 @@ fun LogsPresenter(
     getPoopLogs: GetPoopLogs,
     poopLogHandler: PoopLogHandler,
     api: SupabaseApi,
-    events: Flow<LogsEvent>,
+    events: SendChannel<LogsEvent>,
 ): LogsModel {
 
-    var logs by remember { mutableStateOf<List<DomainPoopLog>?>(null) }
-
-    LaunchedEffect(Unit) {
-        events.collect { event ->
-            when (event) {
-                Add -> {
-                    poopLogHandler.insert(
-                        uuid(), Clock.System.now(), GeoPoint(0.0, 0.0), "dd"
-                    )
-                }
-                is Delete -> {}
-            }
+    val logs = getPoopLogs.subscribe()
+        .mapEach(::DomainPoopLog)
+        .catch {
+            events.send(LogsEvent.ErrorReceivingLogs)
         }
-    }
+        .collectAsState(null).value
 
-    LaunchedEffect(Unit) {
-        getPoopLogs.subscribe().collect { list ->
-            Logger.d { list.toString() }
-            logs = list.map { DomainPoopLog(it) }
-        }
+    return if (logs == null) {
+        LogsModel.Loading
+    } else {
+        LogsModel.Success(
+            logs = logs,
+            actions = LogsAction(
+                add = {}
+            )
+        )
     }
+}
 
-    return LogsModel(
-        logs = logs ?: emptyList(),
-        loading = logs == null
-    )
+inline fun <T, V> Flow<Iterable<T>>.mapEach(
+    crossinline block: (item: T) -> V
+) = map { iterable ->
+    iterable.map { item ->
+        block(item)
+    }
 }
 

@@ -2,6 +2,8 @@ package io.silv.data
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
+import app.cash.sqldelight.coroutines.mapToOne
+import app.cash.sqldelight.coroutines.mapToOneNotNull
 import io.silv.Database
 import io.silv.models.DomainPoopLog
 import io.silv.network.PoopLogDto
@@ -26,4 +28,22 @@ class GetPoopLogs (
             .selectAll()
             .asFlow()
             .mapToList(ioDispatcher)
+}
+
+class GetPoopLog (
+    private val database: Database,
+    private val ioDispatcher: IODispatcher
+) {
+    suspend fun await(id: String): PoopLog? =
+        withContext(ioDispatcher) {
+            database.poopLogQueries
+                .selectById(id)
+                .executeAsOneOrNull()
+        }
+
+    fun subscribe(id: String) =
+        database.poopLogQueries
+            .selectById(id)
+            .asFlow()
+            .mapToOne(ioDispatcher)
 }
