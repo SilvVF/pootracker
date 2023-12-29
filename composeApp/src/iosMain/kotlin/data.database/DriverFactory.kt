@@ -1,9 +1,9 @@
-package io.silv.database
+package io.silv.pootracker.database
 
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.native.NativeSqliteDriver
 import co.touchlab.sqliter.DatabaseConfiguration
-import io.silv.data.DB_NAME
+import io.silv.pootracker.data.DB_NAME
 import io.silv.Database
 import org.koin.core.definition.KoinDefinition
 import org.koin.core.module.Module

@@ -35,7 +35,6 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.koin.android)
             implementation(libs.sqldelight.android.driver)
-
             implementation(libs.koin.androidx.workmanager)
 
             // Kotlin + coroutines
@@ -43,12 +42,20 @@ kotlin {
             // optional - Multiprocess support
             implementation(libs.androidx.work.multiprocess)
 
+            implementation(libs.androidx.lifecycle.runtime.compose)
+            implementation(libs.haze.jetpack.compose)
 
+            implementation("androidx.compose.ui:ui-util")
+            implementation("androidx.compose.material3:material3")
         }
         iosMain.dependencies {
             implementation(libs.sqldelight.native.driver)
         }
         commonMain.dependencies {
+
+            implementation(libs.supabase.gotrue.kt)
+            implementation(libs.compose.auth.ui)
+
             implementation(libs.molecule.runtime)
 
             implementation(libs.multiplatform.settings)
@@ -65,8 +72,8 @@ kotlin {
 
             implementation(compose.runtime)
             implementation(compose.foundation)
-            implementation(compose.material)
             implementation(compose.ui)
+            implementation(libs.compose.auth)
             @OptIn(ExperimentalComposeLibrary::class)
             implementation(compose.components.resources)
 

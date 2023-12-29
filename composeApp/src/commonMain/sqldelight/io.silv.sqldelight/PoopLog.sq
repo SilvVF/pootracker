@@ -1,4 +1,4 @@
-import io.silv.models.GeoPoint;
+import io.silv.pootracker.models.GeoPoint;
 import kotlin.Boolean;
 import kotlinx.datetime.Instant;
 
