@@ -1,22 +1,24 @@
-import io.silv.pootracker.models.GeoPoint;
+import io.silv.pootracker.domain.models.GeoPoint;
 import kotlin.Boolean;
 import kotlinx.datetime.Instant;
 
-CREATE TABLE PoopLog(
-    id TEXT PRIMARY KEY NOT NULL,
+CREATE TABLE logs(
+    id INTEGER PRIMARY KEY NOT NULL,
+    log_id TEXT NOT NULL,
     createdBy TEXT NOT NULL,
     instant INTEGER AS Instant NOT NULL,
     location TEXT AS GeoPoint,
-    deleted INTEGER AS Boolean NOT NULL DEFAULT 0,
     synced INTEGER AS Boolean NOT NULL DEFAULT 0,
     FOREIGN KEY (createdBy) REFERENCES User(id) ON DELETE CASCADE
 );
 
+CREATE INDEX logs_log_id ON logs(log_id);
+
 insert:
-INSERT OR REPLACE INTO PoopLog VALUES ?;
+INSERT OR REPLACE INTO logs VALUES ?;
 
 selectAll:
-SELECT * FROM PoopLog;
+SELECT * FROM logs;
 
 selectById:
-SELECT * FROM PoopLog WHERE id = :id;
+SELECT * FROM logs WHERE id = :id;

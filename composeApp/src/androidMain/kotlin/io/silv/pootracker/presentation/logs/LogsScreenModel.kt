@@ -1,4 +1,4 @@
-package io.silv.pootracker.ui.logs
+package io.silv.pootracker.presentation.logs
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -8,19 +8,14 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberCoroutineScope
 import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.gotrue.SessionStatus
-import io.silv.pootracker.data.GetPoopLogs
-import io.silv.pootracker.data.PoopLogHandler
-import io.silv.pootracker.models.DomainPoopLog
+import io.silv.pootracker.domain.logs.interactor.GetLogs
+import io.silv.pootracker.domain.logs.model.Log
 import io.silv.pootracker.network.SupabaseApi
 import io.silv.pootracker.util.MoleculeEffectScreenModel
-import io.silv.pootracker.util.mapEach
-import io.silv.pootracker.util.uuid
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 
 @Stable
 data class LogsAction(
@@ -37,15 +32,14 @@ sealed class LogsModel (
     data class Loading(val status: SessionStatus): LogsModel(status)
 
     data class Success(
-        val logs: List<DomainPoopLog>,
+        val logs: List<Log>,
         val actions: LogsAction,
         val status: SessionStatus
     ): LogsModel(status)
 }
 
 class LogsScreenModel(
-    private val getPoopLogs: GetPoopLogs,
-    private val poopLogHandler: PoopLogHandler,
+    private val getPoopLogs: GetLogs,
     private val api: SupabaseApi,
     private val auth: Auth
 ): MoleculeEffectScreenModel<LogsEvent, LogsModel>() {
@@ -54,7 +48,6 @@ class LogsScreenModel(
     override fun models(events: SendChannel<LogsEvent>): LogsModel {
         return logsPresenter(
             getPoopLogs,
-            poopLogHandler,
             api,
             auth,
             events
@@ -64,8 +57,7 @@ class LogsScreenModel(
 
 @Composable
 private fun logsPresenter(
-    getPoopLogs: GetPoopLogs,
-    poopLogHandler: PoopLogHandler,
+    getPoopLogs: GetLogs,
     api: SupabaseApi,
     auth: Auth,
     events: SendChannel<LogsEvent>,
@@ -76,28 +68,11 @@ private fun logsPresenter(
     val status by auth.sessionStatus.collectAsState()
 
 
-    val logs by produceState<List<DomainPoopLog>?>(null){
-        getPoopLogs.subscribe()
-            .mapEach(::DomainPoopLog)
-            .catch {
+    val logs by produceState<List<Log>?>(null) {
+        getPoopLogs.subscribe().catch {
                 events.send(LogsEvent.ErrorReceivingLogs)
-
             }.onEach { value = it }
             .launchIn(this)
-    }
-
-    fun addLog() {
-        scope.launch {
-            poopLogHandler.insert(
-                uuid(),
-                Clock.System.now(),
-                createdBy = (status as? SessionStatus.Authenticated)
-                    ?.session
-                    ?.user
-                    ?.id
-                    ?: return@launch
-            )
-        }
     }
 
     return logs?.let {
@@ -105,7 +80,7 @@ private fun logsPresenter(
             logs = it,
             status = status,
             actions = LogsAction(
-                add = { addLog() }
+                add = {  }
             )
         )
     }

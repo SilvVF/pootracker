@@ -1,10 +1,10 @@
 package io.silv.pootracker.data
 
 import io.silv.Database
+import io.silv.pootracker.data.logs.LogsRepositoryImpl
 import io.silv.pootracker.database.Adapters
 import io.silv.pootracker.database.sqlDriverKoinDefinition
-import iosilvsqldelight.PoopLog
-import org.koin.core.module.dsl.factoryOf
+import iosilvsqldelight.Logs
 import org.koin.dsl.module
 
 const val DB_NAME = "pootracker.db"
@@ -16,16 +16,12 @@ val dataModule = module {
     single {
         Database(
             driver = get(),
-            PoopLogAdapter = PoopLog.Adapter(
+            logsAdapter = Logs.Adapter(
                 locationAdapter = Adapters.geoPointToString(),
                 instantAdapter = Adapters.instantToLong()
             )
         )
     }
 
-    factoryOf(::GetPoopLog)
-
-    factoryOf(::GetPoopLogs)
-
-    factoryOf(::PoopLogHandler)
+    single { LogsRepositoryImpl(get()) }
 }

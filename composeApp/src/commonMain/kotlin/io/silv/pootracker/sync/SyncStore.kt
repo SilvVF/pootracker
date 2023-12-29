@@ -3,7 +3,7 @@ package io.silv.pootracker.sync
 import co.touchlab.kermit.Logger
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.set
-import io.silv.pootracker.data.GetPoopLog
+import io.silv.pootracker.domain.logs.interactor.GetLog
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
@@ -12,17 +12,18 @@ import kotlinx.serialization.json.Json
 /**
  * Class used for sync serialization
  *
- * @param logId the id of the poop log.
+ * @param id the id in the local database of the log
+ * @param logId the uuid of the poop log.
  * @param userId the id of the user.
  * @param order the order of the download in the queue.
  */
 @Serializable
-private data class SyncObject(val logId: String, val userId: String, val order: Int)
+private data class SyncObject(val id: Long, val logId: String, val userId: String, val order: Int)
 
 
 class SyncStore(
     private val settings: Settings,
-    private val getPoopLog: GetPoopLog
+    private val getPoopLog: GetLog
 ) {
     /**
      * Counter used to keep the queue order.
@@ -89,11 +90,11 @@ class SyncStore(
 
         val requests = mutableListOf<SyncRequest>()
         if (objs.isNotEmpty()) {
-            for ((logId, userId) in objs) {
+            for (obj in objs) {
 
-                val log = getPoopLog.await(logId)
+                val log = getPoopLog.await(obj.id) ?: continue
 
-                requests.add(SyncRequest(logId, userId))
+                requests.add(SyncRequest(log.id, log.logId, log.createdBy))
             }
         }
 
@@ -108,7 +109,7 @@ class SyncStore(
      * @param request the SyncRequest to serialize.
      */
     private fun serialize(request: SyncRequest): String {
-        val obj = SyncObject(request.logId, request.userId, counter++)
+        val obj = SyncObject(request.id ,request.logId, request.userId, counter++)
         return try {
             Json.encodeToString(obj)
         } catch (e: SerializationException) {

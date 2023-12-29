@@ -1,7 +1,7 @@
 package io.silv.pootracker.database
 
 import app.cash.sqldelight.ColumnAdapter
-import io.silv.pootracker.models.GeoPoint
+import io.silv.pootracker.domain.models.GeoPoint
 import kotlinx.datetime.Instant
 
 object Adapters {

@@ -1,7 +1,7 @@
-package io.silv.pootracker.ui
+package io.silv.pootracker.presentation
 
-import io.silv.pootracker.ui.auth.AuthScreenModel
-import io.silv.pootracker.ui.logs.LogsScreenModel
+import io.silv.pootracker.presentation.auth.AuthScreenModel
+import io.silv.pootracker.presentation.logs.LogsScreenModel
 import org.koin.core.module.dsl.factoryOf
 import org.koin.dsl.module
 

@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 data class SyncRequest(
+    val id: Long,
     val logId: String,
     val userId: String,
 ) {

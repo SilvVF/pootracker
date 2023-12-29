@@ -1,4 +1,4 @@
-package io.silv.pootracker.ui.util
+package io.silv.pootracker.presentation.util
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

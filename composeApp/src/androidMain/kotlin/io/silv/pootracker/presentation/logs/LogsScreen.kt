@@ -1,4 +1,4 @@
-package io.silv.pootracker.ui.logs
+package io.silv.pootracker.presentation.logs
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,8 +42,8 @@ import cafe.adriel.voyager.koin.getScreenModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import io.github.jan.supabase.gotrue.SessionStatus
-import io.silv.pootracker.ui.auth.AuthScreen
-import io.silv.pootracker.ui.util.collectSideEffectsWithLifecycle
+import io.silv.pootracker.presentation.auth.AuthScreen
+import io.silv.pootracker.presentation.util.collectSideEffectsWithLifecycle
 
 class LogsScreen: Screen {
 

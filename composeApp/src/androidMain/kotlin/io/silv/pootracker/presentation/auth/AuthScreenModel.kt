@@ -1,4 +1,4 @@
-package io.silv.pootracker.ui.auth
+package io.silv.pootracker.presentation.auth
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState

@@ -1,6 +1,6 @@
 @file:OptIn(SupabaseExperimental::class)
 
-package io.silv.pootracker.ui.auth
+package io.silv.pootracker.presentation.auth
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row

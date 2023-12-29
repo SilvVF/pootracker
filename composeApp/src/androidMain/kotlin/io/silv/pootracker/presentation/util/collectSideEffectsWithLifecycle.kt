@@ -1,4 +1,4 @@
-package io.silv.pootracker.ui.util
+package io.silv.pootracker.presentation.util
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect

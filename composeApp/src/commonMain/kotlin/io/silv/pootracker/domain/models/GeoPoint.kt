@@ -1,4 +1,4 @@
-package io.silv.pootracker.models
+package io.silv.pootracker.domain.models
 
 data class GeoPoint(
     val x: Double,

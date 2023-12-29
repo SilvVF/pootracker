@@ -20,8 +20,8 @@ import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.transitions.FadeTransition
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.gotrue.handleDeeplinks
-import io.silv.pootracker.ui.logs.LogsScreen
-import io.silv.pootracker.ui.util.PooTrackerTheme
+import io.silv.pootracker.presentation.logs.LogsScreen
+import io.silv.pootracker.presentation.util.PooTrackerTheme
 import org.koin.android.ext.android.inject
 
 
