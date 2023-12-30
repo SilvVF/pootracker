@@ -17,6 +17,7 @@ class LogsRepositoryImpl(
         return handler.subscribeToOne { logsQueries.selectById(id, LogsMapper::mapLog) }
     }
 
+
     suspend fun getLogs(): List<Log> {
         return handler.awaitList { logsQueries.selectAll(LogsMapper::mapLog) }
     }

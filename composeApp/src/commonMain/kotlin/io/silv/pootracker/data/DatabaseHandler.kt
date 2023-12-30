@@ -5,6 +5,7 @@ import app.cash.sqldelight.Query
 import io.silv.Database
 import kotlinx.coroutines.flow.Flow
 
+
 interface DatabaseHandler {
 
     suspend fun <T> await(inTransaction: Boolean = false, block: suspend Database.() -> T): T

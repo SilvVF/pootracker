@@ -12,13 +12,15 @@ import io.silv.pootracker.data.DatabaseHandler
 import io.silv.pootracker.util.IODispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 
-class AndroidDatabaseHandler(
-    val db: Database,
-    private val driver: SqlDriver,
-    val queryDispatcher: IODispatcher,
-    val transactionDispatcher: IODispatcher = queryDispatcher,
-) : DatabaseHandler {
+actual class RealDatabaseHandler : DatabaseHandler, KoinComponent {
+
+    actual val db: Database = get()
+    actual val driver: SqlDriver = get()
+    actual val queryDispatcher: IODispatcher = get()
+    actual val transactionDispatcher: IODispatcher = queryDispatcher
 
     val suspendingTransactionId = ThreadLocal<Int>()
 

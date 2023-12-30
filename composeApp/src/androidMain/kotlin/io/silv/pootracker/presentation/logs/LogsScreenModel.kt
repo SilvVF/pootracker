@@ -8,6 +8,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberCoroutineScope
 import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.gotrue.SessionStatus
+import io.silv.pootracker.data.logs.LogsRepositoryImpl
 import io.silv.pootracker.domain.logs.interactor.GetLogs
 import io.silv.pootracker.domain.logs.model.Log
 import io.silv.pootracker.network.SupabaseApi
@@ -16,6 +17,7 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 @Stable
 data class LogsAction(
@@ -40,6 +42,7 @@ sealed class LogsModel (
 
 class LogsScreenModel(
     private val getPoopLogs: GetLogs,
+    private val logsRepository: LogsRepositoryImpl,
     private val api: SupabaseApi,
     private val auth: Auth
 ): MoleculeEffectScreenModel<LogsEvent, LogsModel>() {
@@ -49,6 +52,7 @@ class LogsScreenModel(
         return logsPresenter(
             getPoopLogs,
             api,
+            logsRepository,
             auth,
             events
         )
@@ -59,6 +63,7 @@ class LogsScreenModel(
 private fun logsPresenter(
     getPoopLogs: GetLogs,
     api: SupabaseApi,
+    logsRepository: LogsRepositoryImpl,
     auth: Auth,
     events: SendChannel<LogsEvent>,
 ): LogsModel {
@@ -80,7 +85,11 @@ private fun logsPresenter(
             logs = it,
             status = status,
             actions = LogsAction(
-                add = {  }
+                add = {
+                    scope.launch {
+
+                    }
+                }
             )
         )
     }

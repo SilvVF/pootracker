@@ -3,7 +3,7 @@ import kotlin.Boolean;
 import kotlinx.datetime.Instant;
 
 CREATE TABLE logs(
-    id INTEGER PRIMARY KEY NOT NULL,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     log_id TEXT NOT NULL,
     createdBy TEXT NOT NULL,
     instant INTEGER AS Instant NOT NULL,

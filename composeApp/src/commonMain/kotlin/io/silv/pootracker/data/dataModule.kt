@@ -3,6 +3,7 @@ package io.silv.pootracker.data
 import io.silv.Database
 import io.silv.pootracker.data.logs.LogsRepositoryImpl
 import io.silv.pootracker.database.Adapters
+import io.silv.pootracker.database.RealDatabaseHandler
 import io.silv.pootracker.database.sqlDriverKoinDefinition
 import iosilvsqldelight.Logs
 import org.koin.dsl.module
@@ -22,6 +23,8 @@ val dataModule = module {
             )
         )
     }
+
+    single<DatabaseHandler> { RealDatabaseHandler() }
 
     single { LogsRepositoryImpl(get()) }
 }
