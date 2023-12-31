@@ -1,129 +1,69 @@
-package io.silv.pootracker.database
+package io.silv.pootracker.data
 
-import app.cash.sqldelight.ExecutableQuery
-import app.cash.sqldelight.Query
-import app.cash.sqldelight.coroutines.asFlow
-import app.cash.sqldelight.coroutines.mapToList
-import app.cash.sqldelight.coroutines.mapToOne
-import app.cash.sqldelight.coroutines.mapToOneOrNull
-import app.cash.sqldelight.db.SqlDriver
-import io.silv.Database
-import io.silv.pootracker.data.DatabaseHandler
-import io.silv.pootracker.util.IODispatcher
+import androidx.compose.runtime.InternalComposeApi
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.get
+import org.koin.mp.ThreadLocal
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 
+expect fun identityHashCode(instance: Any?): Int
 
-actual class RealDatabaseHandler: DatabaseHandler, KoinComponent {
-
-    actual val db: Database = get()
-    actual val driver: SqlDriver = get()
-    actual val queryDispatcher: IODispatcher = get()
-    actual val transactionDispatcher: IODispatcher = queryDispatcher
-
-    val suspendingTransactionId  = object : CoroutineContext {
-        override fun <R> fold(
-            initial: R, operation: (R, CoroutineContext.Element) -> R): R {
-            return initial
-        }
-
-        override fun <E : CoroutineContext.Element> get(
-            key: CoroutineContext.Key<E>): E? {
-         return null
-        }
-
-        override fun minusKey(
-            key: CoroutineContext.Key<*>): CoroutineContext {
-          return this
-        }
-
-    }
-
-    override suspend fun <T> await(inTransaction: Boolean, block: suspend Database.() -> T): T {
-        return dispatch(inTransaction, block)
-    }
-
-    override suspend fun <T : Any> awaitList(
-        inTransaction: Boolean,
-        block: suspend Database.() -> Query<T>,
-    ): List<T> {
-        return dispatch(inTransaction) { block(db).executeAsList() }
-    }
-
-    override suspend fun <T : Any> awaitOne(
-        inTransaction: Boolean,
-        block: suspend Database.() -> Query<T>,
-    ): T {
-        return dispatch(inTransaction) { block(db).executeAsOne() }
-    }
-
-    override suspend fun <T : Any> awaitOneExecutable(
-        inTransaction: Boolean,
-        block: suspend Database.() -> ExecutableQuery<T>,
-    ): T {
-        return dispatch(inTransaction) { block(db).executeAsOne() }
-    }
-
-    override suspend fun <T : Any> awaitOneOrNull(
-        inTransaction: Boolean,
-        block: suspend Database.() -> Query<T>,
-    ): T? {
-        return dispatch(inTransaction) { block(db).executeAsOneOrNull() }
-    }
-
-    override suspend fun <T : Any> awaitOneOrNullExecutable(
-        inTransaction: Boolean,
-        block: suspend Database.() -> ExecutableQuery<T>,
-    ): T? {
-        return dispatch(inTransaction) { block(db).executeAsOneOrNull() }
-    }
-
-    override fun <T : Any> subscribeToList(block: Database.() -> Query<T>): Flow<List<T>> {
-        return block(db).asFlow().mapToList(queryDispatcher)
-    }
-
-    override fun <T : Any> subscribeToOne(block: Database.() -> Query<T>): Flow<T> {
-        return block(db).asFlow().mapToOne(queryDispatcher)
-    }
-
-    override fun <T : Any> subscribeToOneOrNull(block: Database.() -> Query<T>): Flow<T?> {
-        return block(db).asFlow().mapToOneOrNull(queryDispatcher)
-    }
-
-    private suspend fun <T> dispatch(inTransaction: Boolean, block: suspend Database.() -> T): T {
-        // Create a transaction if needed and run the calling block inside it.
-        if (inTransaction) {
-            return withTransaction { block(db) }
-        }
-
-        // If we're currently in the transaction thread, there's no need to dispatch our query.
-        if (driver.currentTransaction() != null) {
-            return block(db)
-        }
-
-        // Get the current database context and run the calling block.
-        val context = getCurrentDatabaseContext()
-        return withContext(context) { block(db) }
-    }
+public interface ThreadContextElement<S> : CoroutineContext.Element {
+    public fun updateThreadContext(context: CoroutineContext): S
+    public fun restoreThreadContext(context: CoroutineContext, oldState: S)
 }
+public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
+    public fun copyForChild(): CopyableThreadContextElement<S>
+    public fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext
+}
+// top-level data class for a nicer out-of-the-box toString representation and class name
+internal data class ThreadLocalKey(private val threadLocal: ThreadLocal<*>) : CoroutineContext.Key<ThreadLocalElement<*>>
 
+public fun <T> ThreadLocal<T>.asContextElement(value: T = get()!!): ThreadContextElement<T> =
+    ThreadLocalElement(value, this)
+
+
+internal class ThreadLocalElement<T>(
+    private val value: T,
+    private val threadLocal: ThreadLocal<T>
+) : ThreadContextElement<T> {
+    override val key: CoroutineContext.Key<*> = ThreadLocalKey(threadLocal)
+
+    override fun updateThreadContext(context: CoroutineContext): T {
+        val oldState = threadLocal.get()
+        threadLocal.set(value)
+        return oldState!!
+    }
+
+    override fun restoreThreadContext(context: CoroutineContext, oldState: T) {
+        threadLocal.set(oldState)
+    }
+
+    // this method is overridden to perform value comparison (==) on key
+    override fun minusKey(key: CoroutineContext.Key<*>): CoroutineContext {
+        return if (this.key == key) EmptyCoroutineContext else this
+    }
+
+    // this method is overridden to perform value comparison (==) on key
+    public override operator fun <E : CoroutineContext.Element> get(key: CoroutineContext.Key<E>): E? =
+        @Suppress("UNCHECKED_CAST")
+        if (this.key == key) this as E else null
+
+    override fun toString(): String = "ThreadLocal(value=$value, threadLocal = $threadLocal)"
+}
 /**
  * Returns the transaction dispatcher if we are on a transaction, or the database dispatchers.
  */
-internal suspend fun RealDatabaseHandler.getCurrentDatabaseContext(): CoroutineContext {
+internal suspend fun AndroidDatabaseHandler.getCurrentDatabaseContext(): CoroutineContext {
     return coroutineContext[TransactionElement]?.transactionDispatcher ?: queryDispatcher
 }
 
@@ -141,7 +81,7 @@ internal suspend fun RealDatabaseHandler.getCurrentDatabaseContext(): CoroutineC
  *
  * The dispatcher used to execute the given [block] will utilize threads from SQLDelight's query executor.
  */
-internal suspend fun <T> RealDatabaseHandler.withTransaction(block: suspend () -> T): T {
+internal suspend fun <T> AndroidDatabaseHandler.withTransaction(block: suspend () -> T): T {
     // Use inherited transaction context if available, this allows nested suspending transactions.
     val transactionContext =
         coroutineContext[TransactionElement]?.transactionDispatcher ?: createTransactionContext()
@@ -178,7 +118,8 @@ internal suspend fun <T> RealDatabaseHandler.withTransaction(block: suspend () -
  * if a blocking DAO method is invoked within the transaction coroutine. Never assign meaning to
  * this value, for now all we care is if its present or not.
  */
-private suspend fun RealDatabaseHandler.createTransactionContext(): CoroutineContext {
+@OptIn(InternalComposeApi::class)
+private suspend fun AndroidDatabaseHandler.createTransactionContext(): CoroutineContext {
     val controlJob = Job()
     // make sure to tie the control job to this context to avoid blocking the transaction if
     // context get cancelled before we can even start using this job. Otherwise, the acquired
@@ -190,8 +131,8 @@ private suspend fun RealDatabaseHandler.createTransactionContext(): CoroutineCon
 
     val dispatcher = transactionDispatcher.acquireTransactionThread(controlJob)
     val transactionElement = TransactionElement(controlJob, dispatcher)
-    val threadLocalElement = suspendingTransactionId
-
+    val threadLocalElement =
+        suspendingTransactionId.asContextElement(identityHashCode(controlJob))
     return dispatcher + transactionElement + threadLocalElement
 }
 
@@ -211,16 +152,13 @@ private suspend fun CoroutineDispatcher.acquireTransactionThread(
             controlJob.cancel()
         }
         try {
-            dispatch(
-                EmptyCoroutineContext,
-                block = Runnable {
-                    runBlocking {
-                        // Thread acquired, resume coroutine
-                        continuation.resume(kotlin.coroutines.coroutineContext[ContinuationInterceptor]!!)
-                        controlJob.join()
-                    }
+            dispatch(EmptyCoroutineContext, Runnable {
+                runBlocking {
+                    // Thread acquired, resume coroutine
+                    continuation.resume(coroutineContext[ContinuationInterceptor]!!)
+                    controlJob.join()
                 }
-            )
+            })
         } catch (ex: Exception) {
             // Couldn't acquire a thread, cancel coroutine
             continuation.cancel(

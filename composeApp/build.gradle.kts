@@ -1,6 +1,3 @@
-import org.jetbrains.compose.ExperimentalComposeLibrary
-
-
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
@@ -74,8 +71,6 @@ kotlin {
             implementation(compose.foundation)
             implementation(compose.ui)
             implementation(libs.compose.auth)
-            @OptIn(ExperimentalComposeLibrary::class)
-            implementation(compose.components.resources)
 
             implementation(libs.sqldelight.coroutines.extensions)
             implementation(libs.sqldelight.primitive.adapters)
@@ -106,7 +101,7 @@ android {
 
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
     sourceSets["main"].res.srcDirs("src/androidMain/res")
-    sourceSets["main"].resources.srcDirs("src/commonMain/resources")
+    //sourceSets["main"].resources.srcDirs("src/commonMain/resources")
 
     defaultConfig {
         applicationId = "io.silv.pootracker"
@@ -132,8 +127,5 @@ android {
     dependencies {
         debugImplementation(libs.compose.ui.tooling)
     }
-}
-dependencies {
-    implementation("androidx.core:core-ktx:+")
 }
 

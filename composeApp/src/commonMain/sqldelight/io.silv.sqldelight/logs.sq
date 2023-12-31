@@ -15,7 +15,7 @@ CREATE TABLE logs(
 CREATE INDEX logs_log_id ON logs(log_id);
 
 insert:
-INSERT OR REPLACE INTO logs VALUES ?;
+INSERT OR REPLACE INTO logs(log_id, createdBy, instant, location, synced) VALUES (?, ?, ?, ?, ?);
 
 selectAll:
 SELECT * FROM logs;

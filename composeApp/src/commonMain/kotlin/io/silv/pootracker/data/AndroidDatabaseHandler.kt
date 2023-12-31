@@ -1,4 +1,4 @@
-package io.silv.pootracker.database
+package io.silv.pootracker.data
 
 import app.cash.sqldelight.ExecutableQuery
 import app.cash.sqldelight.Query
@@ -8,19 +8,19 @@ import app.cash.sqldelight.coroutines.mapToOne
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import app.cash.sqldelight.db.SqlDriver
 import io.silv.Database
-import io.silv.pootracker.data.DatabaseHandler
-import io.silv.pootracker.util.IODispatcher
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.get
+import org.koin.mp.ThreadLocal
 
-actual class RealDatabaseHandler : DatabaseHandler, KoinComponent {
-
-    actual val db: Database = get()
-    actual val driver: SqlDriver = get()
-    actual val queryDispatcher: IODispatcher = get()
-    actual val transactionDispatcher: IODispatcher = queryDispatcher
+class AndroidDatabaseHandler(
+    val db: Database,
+    private val driver: SqlDriver,
+    val queryDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    val transactionDispatcher: CoroutineDispatcher = queryDispatcher,
+) : DatabaseHandler {
 
     val suspendingTransactionId = ThreadLocal<Int>()
 
