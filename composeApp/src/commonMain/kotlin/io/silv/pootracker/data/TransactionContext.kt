@@ -1,6 +1,7 @@
 package io.silv.pootracker.data
 
 import androidx.compose.runtime.InternalComposeApi
+import co.touchlab.stately.concurrency.ThreadLocalRef
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Job
@@ -8,7 +9,6 @@ import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import org.koin.mp.ThreadLocal
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -21,20 +21,17 @@ public interface ThreadContextElement<S> : CoroutineContext.Element {
     public fun updateThreadContext(context: CoroutineContext): S
     public fun restoreThreadContext(context: CoroutineContext, oldState: S)
 }
-public interface CopyableThreadContextElement<S> : ThreadContextElement<S> {
-    public fun copyForChild(): CopyableThreadContextElement<S>
-    public fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext
-}
-// top-level data class for a nicer out-of-the-box toString representation and class name
-internal data class ThreadLocalKey(private val threadLocal: ThreadLocal<*>) : CoroutineContext.Key<ThreadLocalElement<*>>
 
-public fun <T> ThreadLocal<T>.asContextElement(value: T = get()!!): ThreadContextElement<T> =
+// top-level data class for a nicer out-of-the-box toString representation and class name
+internal data class ThreadLocalKey(private val threadLocal: ThreadLocalRef<*>) : CoroutineContext.Key<ThreadLocalElement<*>>
+
+public fun <T> ThreadLocalRef<T>.asContextElement(value: T = get()!!): ThreadContextElement<T> =
     ThreadLocalElement(value, this)
 
 
 internal class ThreadLocalElement<T>(
     private val value: T,
-    private val threadLocal: ThreadLocal<T>
+    private val threadLocal: ThreadLocalRef<T>
 ) : ThreadContextElement<T> {
     override val key: CoroutineContext.Key<*> = ThreadLocalKey(threadLocal)
 

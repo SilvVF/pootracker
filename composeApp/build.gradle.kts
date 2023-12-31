@@ -76,6 +76,7 @@ kotlin {
             implementation(libs.sqldelight.primitive.adapters)
 
             implementation(libs.kotlinx.datetime)
+            implementation("co.touchlab:stately-concurrency:2.0.0")
 
             implementation(project.dependencies.platform("io.github.jan-tennert.supabase:bom:2.0.2"))
             implementation("io.github.jan-tennert.supabase:postgrest-kt")

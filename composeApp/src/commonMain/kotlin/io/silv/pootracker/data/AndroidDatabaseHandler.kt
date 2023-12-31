@@ -7,13 +7,13 @@ import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOne
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import app.cash.sqldelight.db.SqlDriver
+import co.touchlab.stately.concurrency.ThreadLocalRef
 import io.silv.Database
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
-import org.koin.mp.ThreadLocal
 
 class AndroidDatabaseHandler(
     val db: Database,
@@ -22,7 +22,7 @@ class AndroidDatabaseHandler(
     val transactionDispatcher: CoroutineDispatcher = queryDispatcher,
 ) : DatabaseHandler {
 
-    val suspendingTransactionId = ThreadLocal<Int>()
+    val suspendingTransactionId = ThreadLocalRef<Int?>()
 
     override suspend fun <T> await(inTransaction: Boolean, block: suspend Database.() -> T): T {
         return dispatch(inTransaction, block)
