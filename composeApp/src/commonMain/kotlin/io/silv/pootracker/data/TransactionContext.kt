@@ -40,7 +40,6 @@ internal class ThreadLocalElement<T>(
         threadLocal.set(value)
         return oldState!!
     }
-
     override fun restoreThreadContext(context: CoroutineContext, oldState: T) {
         threadLocal.set(oldState)
     }
